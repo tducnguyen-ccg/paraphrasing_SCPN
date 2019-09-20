@@ -70,12 +70,8 @@ def encode_data(out_file):
 
         # add EOS
         seg_sent.append(pp_vocab['EOS'])
-        #print 'test demo'
         torch_sent = Variable(torch.from_numpy(np.array(seg_sent, dtype='int32')).long().cuda())
-        #print torch_sent
-        #print 'test demo 1'
         torch_sent_len = torch.from_numpy(np.array([len(seg_sent)], dtype='int32')).long().cuda()
-        #print 'torch_sent_len: ', torch_sent_len
 
         # encode parse using parse vocab
         parse_tree = ParentedTree.fromstring(ex['parse'].strip())
@@ -108,35 +104,19 @@ def encode_data(out_file):
                 torch_sent_len[:], tp_len, pp_vocab['EOS'], beam_size=4, max_steps=40)
         #print 'beam_dict:', beam_dict[0]
         for b_idx in beam_dict:
-            #print 'for loop'
-            #print b_idx
-            #print 'seqs: ' ,seqs
-            #print 'seqs[0]: ', seqs[0], seqs[b_idx] 
+            
             prob,_,_,seq = beam_dict[b_idx][0]
-            #print 'beam_dict 00:', beam_dict[b_idx][0]
-            #print 'rev:' , rev_label_voc
-            #print 'type rev', type(rev_label_voc)
-            #print 'vocab: ', rev_pp_vocab
-            #print 'seq: ', seq
-            #print 'type beam: ', type(beam_dict)
+            
             gen_parse = ' '.join([rev_label_voc[int(z)] for z in seqs[b_idx]])
             gen_sent = ' '.join([rev_pp_vocab[int(w)] for w in seq[:-1]])
-            print 'gen_parse: ', gen_parse
-            print 'gen_sent: ',gen_sent
-            '''out.writerow({'idx': ex['idx'],
-                    'template':templates[b_idx], 'generated_parse':gen_parse, 
-                    'sentence':reverse_bpe(gen_sent.split())})'''
-        print 'demo'       
-        print 'args: ', args
+            
         
         # generate paraphrases from parses
         try:
             beam_dict = net.batch_beam_search(torch_sent.unsqueeze(0), tp_parses, 
                 torch_sent_len[:], tp_len, pp_vocab['EOS'], beam_size=4, max_steps=40)
-            #print 'beam_dict:', len(beam_dict)
             for b_idx in beam_dict:
-                #print 'for loop'
-                #print b_idx
+               
                 prob,_,_,seq = beam_dict[b_idx][0]
                 gen_parse = ' '.join([rev_label_voc[int(z)] for z in seqs[b_idx]])
                 gen_sent = ' '.join([rev_pp_vocab[int(w)] for w in seq[:-1]])
